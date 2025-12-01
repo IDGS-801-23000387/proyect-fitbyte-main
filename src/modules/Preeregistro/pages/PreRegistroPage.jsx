@@ -142,54 +142,54 @@ export default function PreRegistroPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-          <div className="bg-gradient-to-r from-[#212B36] to-[#1A232C] p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-lg w-fit">
-            <i className="fas fa-user-plus text-white text-2xl sm:text-3xl"></i>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-100 p-3 sm:p-4 md:p-6 lg:p-8">
+      <div className="mb-4 sm:mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+          <div className="bg-gradient-to-r from-[#212B36] to-[#1A232C] p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg w-fit">
+            <i className="fas fa-user-plus text-white text-xl sm:text-2xl md:text-3xl"></i>
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
               Pre-Registro
             </h1>
-            <p className="text-gray-600 text-base sm:text-lg mt-1 sm:mt-2">
+            <p className="text-gray-600 text-sm sm:text-base md:text-lg mt-1 sm:mt-2">
               Gestiona las solicitudes de registro de nuevos miembros
             </p>
           </div>
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-5 md:mb-6">
         <SearchBar value={search} onChange={setSearch} />
       </div>
 
-      <div className="bg-white/80 backdrop-blur-lg rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl border border-gray-200/60 p-4 sm:p-6 h-[calc(100vh-200px)] sm:h-[calc(100vh-240px)] min-h-[600px] sm:min-h-[700px]">
-        <div className="bg-gradient-to-r from-[#212B36] to-[#1A232C] text-white p-4 sm:p-6 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 flex-shrink-0 shadow-lg">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <i className="fas fa-tachometer-alt text-xl sm:text-2xl"></i>
-              <h2 className="text-xl sm:text-2xl font-bold">
+      <div className="bg-white/80 backdrop-blur-lg rounded-xl sm:rounded-2xl md:rounded-3xl shadow-lg sm:shadow-xl md:shadow-2xl border border-gray-200/60 p-3 sm:p-4 md:p-5 lg:p-6 h-[calc(100vh-180px)] sm:h-[calc(100vh-220px)] md:h-[calc(100vh-240px)] lg:h-[calc(100vh-260px)] min-h-[500px] sm:min-h-[550px] md:min-h-[600px] lg:min-h-[650px] xl:min-h-[700px]">
+        <div className="bg-gradient-to-r from-[#212B36] to-[#1A232C] text-white p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg sm:rounded-xl md:rounded-2xl mb-3 sm:mb-4 md:mb-5 lg:mb-6 flex-shrink-0 shadow-md sm:shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 md:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+              <i className="fas fa-tachometer-alt text-lg sm:text-xl md:text-2xl"></i>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold">
                 Panel de Pre-Registros
               </h2>
             </div>
-            <div className="flex items-center gap-3 bg-white/20 px-3 py-1 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-sm sm:text-base">
+            <div className="flex items-center gap-2 bg-white/20 px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-md sm:rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base">
               <i className="fas fa-info-circle"></i>
               <span className="font-semibold">
-                {filtered.length} registros encontrados
+                {filtered.length} registro{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="h-[calc(100%-140px)] sm:h-[calc(100%-120px)]">
+        <div className="h-[calc(100%-110px)] sm:h-[calc(100%-120px)] md:h-[calc(100%-130px)] lg:h-[calc(100%-140px)]">
           {cargando ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-4 border-[#212B36] border-t-transparent mx-auto mb-4 sm:mb-6"></div>
-                <p className="text-gray-600 text-base sm:text-lg font-semibold">
+                <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 border-3 sm:border-4 border-[#212B36] border-t-transparent mx-auto mb-3 sm:mb-4 md:mb-5 lg:mb-6"></div>
+                <p className="text-gray-600 text-sm sm:text-base md:text-lg font-semibold">
                   Cargando pre-registros...
                 </p>
-                <p className="text-gray-500 text-xs sm:text-sm mt-1 sm:mt-2">
+                <p className="text-gray-500 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">
                   Por favor espere un momento
                 </p>
               </div>

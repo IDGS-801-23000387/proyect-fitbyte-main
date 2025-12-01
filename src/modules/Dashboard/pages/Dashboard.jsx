@@ -22,60 +22,67 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import api from "../../../api/axiosConfig";
+import {
+  obtenerResumenGeneral,
+  obtenerIngresosMensuales,
+  obtenerMembresiasPorVencer,
+} from "../api/dashboard.api";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [resumen, setResumen] = useState(null);
   const [ingresosMensuales, setIngresosMensuales] = useState([]);
 
- 
   useEffect(() => {
-    const fetchData = async () => {
+    const cargar = async () => {
       try {
-        const r1 = await api.get("/Dashboard/resumen-general");
-        const r2 = await api.get("/Dashboard/ingresos-mensuales");
-        const r3 = await api.get("/Dashboard/membresias-por-vencer");
+        const r1 = await obtenerResumenGeneral();
+        const r2 = await obtenerIngresosMensuales();
+        const r3 = await obtenerMembresiasPorVencer();
 
         const data1 = r1.data;
         const data2 = r2.data;
 
+        // Mezclar resumen + por vencer
         setResumen({
           ...data1,
           membresiasPorVencer: r3.data,
         });
 
-        const grafica = Array.from({ length: 12 }).map((_, i) => ({
+        // Construir gráfica con productos + visitas + renovaciones
+        const grafica = Array.from({ length: 12 }).map((_, idx) => ({
           mes: [
             "Ene","Feb","Mar","Abr","May","Jun",
             "Jul","Ago","Sep","Oct","Nov","Dic",
-          ][i],
+          ][idx],
           productos:
-            data2.ventasProductos?.find((x) => x.mes === i + 1)?.total || 0,
+            data2.ventasProductos?.find((x) => x.mes === idx + 1)?.total || 0,
           visitas:
-            data2.visitas?.find((x) => x.mes === i + 1)?.total || 0,
+            data2.visitas?.find((x) => x.mes === idx + 1)?.total || 0,
+          renovaciones:
+            data2.renovaciones?.find((x) => x.mes === idx + 1)?.total || 0,
         }));
 
         setIngresosMensuales(grafica);
         setLoading(false);
-      } catch (error) {
-        console.error("Error cargando dashboard:", error);
+      } catch (e) {
+        console.error("Error cargando dashboard:", e);
       }
     };
 
-    fetchData();
+    cargar();
   }, []);
 
   if (loading)
     return (
       <div className="w-full flex justify-center py-32 bg-white min-h-screen">
-        <Loader2 className="animate-spin text-purple-500" size={42} />
+        <Loader2 size={42} className="animate-spin text-purple-500" />
       </div>
     );
 
   const r = resumen;
 
- 
+  // COMPONENTE REUTILIZADO
   const StatCard = ({ icon: Icon, title, value, subtitle, color }) => (
     <div className="bg-[#1E293B] rounded-2xl shadow-lg p-6 hover:scale-[1.02] transition-all">
       <div className="flex items-center gap-4">
@@ -98,7 +105,7 @@ export default function Dashboard() {
   return (
     <div className="w-full bg-[#F5F7FA] min-h-screen p-6">
 
-    
+      {/* ===== TITULO ===== */}
       <div className="mb-10">
         <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
           Dashboard FitByte
@@ -106,7 +113,7 @@ export default function Dashboard() {
         <p className="text-gray-600 mt-1">Resumen general del gimnasio</p>
       </div>
 
-    
+      {/* ===== BLOQUE 1 ===== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <StatCard
           icon={Users}
@@ -115,15 +122,20 @@ export default function Dashboard() {
           subtitle="Socios activos"
           color="bg-blue-600"
         />
+
+        {/* ACTUALIZADO: ahora suma renovaciones */}
         <StatCard
           icon={DollarSign}
           title="Ingresos del Mes"
           value={`$${(
-            r.ventas.productosMes + r.ventas.visitasMes
+            r.ventas.productosMes +
+            r.ventas.visitasMes +
+            r.ventas.renovacionesMes
           ).toLocaleString()}`}
-          subtitle="Total acumulado"
+          subtitle="Incluye renovaciones"
           color="bg-green-600"
         />
+
         <StatCard
           icon={ShoppingCart}
           title="Ventas Hoy"
@@ -133,6 +145,7 @@ export default function Dashboard() {
           subtitle={`${r.visitas.hoy} visitas`}
           color="bg-purple-600"
         />
+
         <StatCard
           icon={UserCheck}
           title="Asistencias Hoy"
@@ -142,7 +155,7 @@ export default function Dashboard() {
         />
       </div>
 
-   
+      {/* ===== BLOQUE 2 ===== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <StatCard
           icon={AlertCircle}
@@ -173,35 +186,35 @@ export default function Dashboard() {
           color="bg-cyan-500"
         />
       </div>
- 
+
+      {/* ===== GRAFICA ===== */}
       <div className="bg-white rounded-2xl shadow-xl p-6 mb-12 border border-gray-200">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            Ingresos Mensuales
-          </h2>
+          <h2 className="text-xl font-bold text-gray-900">Ingresos Mensuales</h2>
           <BarChart3 className="text-green-600" size={26} />
         </div>
 
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={ingresosMensuales}>
-              <XAxis dataKey="mes" stroke="#334155" tick={{ fill: "#334155" }} />
-              <YAxis stroke="#334155" tick={{ fill: "#334155" }} />
+              <XAxis dataKey="mes" stroke="#334155" />
+              <YAxis stroke="#334155" />
               <Tooltip
                 contentStyle={{
                   background: "white",
                   borderRadius: "10px",
                   border: "1px solid #E2E8F0",
                 }}
-                labelStyle={{ color: "#0F172A" }}
               />
               <Bar dataKey="productos" fill="#6366F1" radius={[6, 6, 0, 0]} />
               <Bar dataKey="visitas" fill="#10B981" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="renovaciones" fill="#F59E0B" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
- 
+
+      {/* ===== MEMBRESÍAS POR VENCER ===== */}
       <div className="bg-white rounded-2xl shadow-xl p-6 mb-12 border border-gray-200">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
           Membresías por vencer
@@ -215,9 +228,7 @@ export default function Dashboard() {
             >
               <div>
                 <h3 className="text-gray-900 font-semibold">{m.nombre}</h3>
-                <p className="text-gray-600 text-sm">
-                  Código: {m.codigoCliente}
-                </p>
+                <p className="text-gray-600 text-sm">Código: {m.codigoCliente}</p>
               </div>
 
               <span className="text-rose-600 font-semibold">
@@ -227,7 +238,8 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
- 
+
+      {/* ===== TARJETAS EXTRA ===== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-[#1E293B] rounded-2xl shadow p-6 text-white">
           <div className="flex items-center justify-between mb-4">

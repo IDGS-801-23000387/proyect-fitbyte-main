@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { obtenerCorte } from "../api/corteCaja.api";
 import { useParams } from "react-router-dom";
-import { obtenerCortesPorDia } from "../api/corteCaja.api";
-import { Calendar } from "lucide-react";
 
 export default function CorteDetalle() {
   const { id } = useParams();
@@ -9,55 +8,46 @@ export default function CorteDetalle() {
 
   useEffect(() => {
     const cargar = async () => {
-      const hoy = new Date().toISOString().split("T")[0];
-      const r = await obtenerCortesPorDia(hoy);
-
-      const encontrado = r.data.find((c) => c.id === Number(id));
-      setCorte(encontrado);
+      const r = await obtenerCorte(id);
+      setCorte(r.data);
     };
-
     cargar();
   }, [id]);
 
-  if (!corte)
-    return <p className="p-6">Cargando detalles del corte...</p>;
+  if (!corte) return <p className="p-6">Cargando...</p>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-3xl mx-auto bg-white rounded-xl shadow">
 
       <h1 className="text-2xl font-bold mb-6">
-        Corte #{String(id).padStart(4, "0")}
+        Corte #{corte.id}
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card title="Caja Inicial" value={corte.cajaInicial} />
-
-        <Card title="Ingresos" value={corte.ingresosTotales} />
-
-        <Card title="Egresos" value={corte.egresosTotales} />
-
-        <Card title="Ganancia" value={corte.ganancia} green />
+      <div className="space-y-3 mb-6">
+        <p><strong>Monto inicial:</strong> ${corte.montoInicial}</p>
+        <p><strong>Monto final:</strong> {corte.montoFinal ? `$${corte.montoFinal}` : "Aún abierto"}</p>
+        <p><strong>Fecha apertura:</strong> {new Date(corte.fechaApertura).toLocaleString()}</p>
+        <p><strong>Fecha cierre:</strong> {corte.fechaCierre ? new Date(corte.fechaCierre).toLocaleString() : "Aún abierto"}</p>
       </div>
 
-      <div className="p-4 bg-gray-50 rounded border flex items-center gap-2">
-        <Calendar size={20} className="text-gray-500" />
-        <span>{new Date(corte.fecha).toLocaleString()}</span>
-      </div>
-    </div>
-  );
-}
+      <h2 className="text-xl font-bold mb-3">Movimientos</h2>
 
-function Card({ title, value, green }) {
-  return (
-    <div className="p-4 bg-white border rounded shadow">
-      <p className="text-gray-500">{title}</p>
-      <h2
-        className={`text-2xl font-bold ${
-          green ? "text-green-600" : "text-black"
-        }`}
-      >
-        ${value}
-      </h2>
+      <div className="border rounded-lg p-4 bg-gray-50">
+        {corte.movimientos.length === 0 ? (
+          <p>No hay movimientos registrados.</p>
+        ) : (
+          corte.movimientos.map((m) => (
+            <div key={m.id} className="border-b pb-3 mb-3">
+              <p><strong>{m.tipo}</strong></p>
+              <p>Monto: ${m.monto}</p>
+              <p>{m.descripcion}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(m.fecha).toLocaleString()}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

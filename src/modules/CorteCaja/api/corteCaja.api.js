@@ -1,20 +1,17 @@
 import api from "../../../api/axiosConfig";
 
- 
-export const obtenerCorteDiario = (cajaInicial) =>
-  api.get(`/CorteCaja/diario?cajaInicial=${cajaInicial}`);
+// Abrir corte
+export const abrirCorte = (montoInicial) =>
+  api.post("/CorteCaja/abrir", montoInicial);
 
- 
-export const cerrarCorte = (data) => api.post("/CorteCaja/cerrar", data);
+// Cerrar corte
+export const cerrarCorte = () =>
+  api.post("/CorteCaja/cerrar");
 
- 
+// Obtener cortes de un día
 export const obtenerCortesPorDia = (fecha) =>
   api.get(`/CorteCaja/historial/dia?fecha=${fecha}`);
 
- 
-export const obtenerCortesSemana = () =>
-  api.get(`/CorteCaja/historial/semana`);
-
- 
-export const obtenerCortesMes = (year, month) =>
-  api.get(`/CorteCaja/historial/mes?year=${year}&month=${month}`);
+// Obtener corte por ID
+export const obtenerCorte = (id) =>
+  api.get(`/CorteCaja/${id}`);

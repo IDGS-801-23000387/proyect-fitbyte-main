@@ -1,14 +1,22 @@
-
 import api from "../../../api/axiosConfig";
 
+// ================================
+// 📌 RESUMEN GENERAL
+// ================================
 export const obtenerResumenGeneral = () =>
-  api.get("/dashboardv2/resumen-general");
+  api.get("/dashboard/resumen-general");
 
+ 
 export const obtenerIngresosMensuales = () =>
-  api.get("/dashboardv2/ingresos-mensuales");
+  api.get("/dashboard/ingresos-mensuales");
 
+ 
 export const obtenerMembresiasPorVencer = () =>
-  api.get("/dashboardv2/membresias-por-vencer");
+  api.get("/dashboard/membresias-por-vencer");
 
+ 
 export const obtenerTopProductos = () =>
-  api.get("/dashboardv2/top-productos");
+  api.get("/dashboard/top-productos");
+ 
+export const obtenerAsistenciasSemana = () =>
+  api.get("/dashboard/asistencias-semana");

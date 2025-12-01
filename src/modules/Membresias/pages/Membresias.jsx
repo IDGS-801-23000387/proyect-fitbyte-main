@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import Swal from "sweetalert2";
 
 import MembresiaModal from "../components/MembresiaModal";
 import MembresiaForm from "../components/MembresiaForm";
 import MembresiaTable from "../components/MembresiaTable";
 import MembresiaNotificaciones from "../components/MembresiaNotificaciones";
+import RenovarMembresiaModal from "../components/RenovarMembresiaModal";
 
 import {
   getMembresias,
@@ -15,8 +17,6 @@ import {
   getMembresiasPorVencer,
 } from "../api/membresias.api";
 
-import Swal from "sweetalert2";
-
 export default function Membresias() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingData, setEditingData] = useState(null);
@@ -24,8 +24,14 @@ export default function Membresias() {
   const [alertas, setAlertas] = useState([]);
   const [cargando, setCargando] = useState(false);
 
+  const [renovarOpen, setRenovarOpen] = useState(false);
+  const [renovarTarget, setRenovarTarget] = useState(null);
+
   const location = useLocation();
 
+  // ================================
+  // Pre-registro carga automática
+  // ================================
   useEffect(() => {
     if (location.state?.preRegistro) {
       const p = location.state.preRegistro;
@@ -52,6 +58,9 @@ export default function Membresias() {
     }
   }, [location.state]);
 
+  // ================================
+  // Cargar datos
+  // ================================
   useEffect(() => {
     cargarDatos();
     cargarAlertas();
@@ -60,66 +69,62 @@ export default function Membresias() {
   const cargarAlertas = async () => {
     try {
       const data = await getMembresiasPorVencer();
-      const alertasMapeadas = Array.isArray(data)
+      const alertasLimpias = Array.isArray(data)
         ? data.map((m) => ({
             codigoCliente: m.codigoCliente || m.CodigoCliente || "—",
             nombre: m.nombre || m.Nombre || "—",
             correo: m.correo || m.Correo || "—",
-            fechaVencimiento:
-              m.fechaVencimiento || m.FechaVencimiento || null,
+            fechaVencimiento: m.fechaVencimiento || m.FechaVencimiento || null,
           }))
         : [];
 
-      setAlertas(alertasMapeadas);
-    } catch {
-      setAlertas([]);
+      setAlertas(alertasLimpias);
+    } catch (e) {
+      console.error("Error cargando alertas:", e);
     }
   };
 
   const cargarDatos = async () => {
     try {
       setCargando(true);
+
       const data = await getMembresias();
 
       if (Array.isArray(data)) {
-        const datosMapeados = data.map((item, index) => ({
-          id: item.Id || item.id || item.idMembresia || `temp-${index}`,
-          codigoCliente: item.CodigoCliente || item.codigoCliente,
-          nombre: item.Nombre || item.nombre,
-          edad: item.Edad || item.edad,
-          telefono: item.Telefono || item.telefono,
-          direccion: item.Direccion || item.direccion,
-          correo: item.Correo || item.correo,
-          rutina: item.Rutina || item.rutina,
-          enfermedadesOLesiones:
-            item.EnfermedadesOLesiones || item.enfermedadesOLesiones,
-          fotoUrl: item.FotoUrl || item.fotoUrl,
-          tipo: item.Tipo || item.tipo,
-          nivel: item.Nivel || item.nivel,
-          activa: item.Activa ?? item.activa,
-          fechaRegistro: item.FechaRegistro || item.fechaRegistro,
-          fechaVencimiento: item.FechaVencimiento || item.fechaVencimiento,
-          formaPago: item.FormaPago || item.formaPago,
-          montoPagado: item.MontoPagado ?? item.montoPagado,
-          historial: item.Historial || item.historial,
+        const lista = data.map((m, idx) => ({
+          id: m.id || m.Id || idx,
+          codigoCliente: m.codigoCliente || m.CodigoCliente || "—",
+          nombre: m.nombre || m.Nombre || "—",
+          edad: m.edad || m.Edad || "",
+          telefono: m.telefono || m.Telefono || "",
+          direccion: m.direccion || m.Direccion || "",
+          correo: m.correo || m.Correo || "",
+          rutina: m.rutina || m.Rutina || "",
+          enfermedadesOLesiones: m.enfermedadesOLesiones || m.EnfermedadesOLesiones || "",
+          fotoUrl: m.fotoUrl || m.FotoUrl || null,
+          tipo: m.tipo || m.Tipo || "—",
+          nivel: m.nivel || m.Nivel || "—",
+          fechaRegistro: m.fechaRegistro || m.FechaRegistro || null,
+          fechaVencimiento: m.fechaVencimiento || m.FechaVencimiento || null,
+          formaPago: m.formaPago || m.FormaPago || "—",
+          montoPagado: m.montoPagado ?? m.MontoPagado ?? 0,
         }));
 
-        setRegistros(datosMapeados);
+        setRegistros(lista);
       } else {
         setRegistros([]);
       }
-    } catch {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Error al cargar las membresías",
-      });
+    } catch (error) {
+      Swal.fire("Error", "No se pudieron cargar las membresías", "error");
       setRegistros([]);
     } finally {
       setCargando(false);
     }
   };
 
+  // ================================
+  // Crear / Editar
+  // ================================
   const guardar = async (formData) => {
     if (!formData) {
       setModalOpen(false);
@@ -127,42 +132,28 @@ export default function Membresias() {
       return;
     }
 
-    const mensaje = editingData?.id
-      ? "¿Deseas guardar los cambios?"
-      : "¿Registrar nueva membresía?";
+    const esEdicion = Boolean(editingData?.id);
 
-    const confirm = await Swal.fire({
+    const ok = await Swal.fire({
+      title: "¿Confirmar?",
+      text: esEdicion ? "¿Deseas editar esta membresía?" : "¿Registrar nueva membresía?",
       icon: "question",
-      title: "Confirmación",
-      text: mensaje,
       showCancelButton: true,
-      confirmButtonColor: "#121824",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Confirmar",
+      confirmButtonText: "Sí",
       cancelButtonText: "Cancelar",
     });
 
-    if (!confirm.isConfirmed) return;
+    if (!ok.isConfirmed) return;
 
     try {
       setCargando(true);
 
-      if (editingData?.id) {
+      if (esEdicion) {
         await editarMembresia(editingData.id, formData);
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: "Membresía editada correctamente",
-          confirmButtonColor: "#121824",
-        });
+        Swal.fire("Actualizado", "Membresía editada correctamente", "success");
       } else {
         await registrarMembresia(formData);
-        Swal.fire({
-          icon: "success",
-          title: "Éxito",
-          text: "Membresía registrada correctamente",
-          confirmButtonColor: "#121824",
-        });
+        Swal.fire("Registrado", "Membresía creada correctamente", "success");
       }
 
       await cargarDatos();
@@ -170,17 +161,14 @@ export default function Membresias() {
 
       setModalOpen(false);
       setEditingData(null);
-    } catch {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Error al guardar la membresía",
-      });
+    } catch (error) {
+      Swal.fire("Error", "No se pudo guardar la membresía", "error");
     } finally {
       setCargando(false);
     }
   };
 
+  // Editar
   const editar = (item) => {
     setEditingData({
       id: item.id,
@@ -203,87 +191,82 @@ export default function Membresias() {
     setModalOpen(true);
   };
 
-  const renovar = async (item) => {
-    const confirm = await Swal.fire({
-      icon: "question",
-      title: "Renovar Membresía",
-      text: `¿Renovar la membresía de ${item.nombre}?`,
-      showCancelButton: true,
-      confirmButtonColor: "#121824",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Sí, renovar",
-    });
+  // ================================
+  // Renovar
+  // ================================
+  const renovar = (item) => {
+    setRenovarTarget(item);
+    setRenovarOpen(true);
+  };
 
-    if (!confirm.isConfirmed) return;
+  const confirmarRenovacion = async ({
+    nuevaFechaVencimiento,
+    tipoPago,
+    montoPagado,
+  }) => {
+    const body = {
+      NuevaFechaVencimiento: nuevaFechaVencimiento,
+      TipoPago: tipoPago,
+      MontoPagado: montoPagado,
+    };
+
+    console.log("📤 BODY que se envía al API:", body);
 
     try {
       setCargando(true);
-      await renovarMembresia(item.id);
 
-      Swal.fire({
-        icon: "success",
-        title: "Éxito",
-        text: "Membresía renovada correctamente",
-        confirmButtonColor: "#121824",
-      });
+      await renovarMembresia(renovarTarget.id, body);
+
+      Swal.fire("Renovado", "La membresía fue renovada correctamente", "success");
 
       await cargarDatos();
       await cargarAlertas();
-    } catch {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Error al renovar la membresía",
-      });
+    } catch (e) {
+      console.error("❌ ERROR EN RENOVAR:", e);
+      Swal.fire("Error", "No se pudo renovar la membresía", "error");
     } finally {
+      setRenovarOpen(false);
+      setRenovarTarget(null);
       setCargando(false);
     }
   };
 
-  const eliminarReg = async (item) => {
-    const confirm = await Swal.fire({
+  // ================================
+  // Eliminar
+  // ================================
+  const eliminar = async (item) => {
+    const ok = await Swal.fire({
+      title: "¿Eliminar?",
+      text: `Esta acción no se puede deshacer.`,
       icon: "warning",
-      title: "Eliminar Membresía",
-      text: `¿Eliminar la membresía de ${item.nombre}?`,
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Eliminar",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     });
 
-    if (!confirm.isConfirmed) return;
+    if (!ok.isConfirmed) return;
 
     try {
       setCargando(true);
       await eliminarMembresia(item.id);
 
-      Swal.fire({
-        icon: "success",
-        title: "Eliminada",
-        text: "La membresía se eliminó correctamente",
-        confirmButtonColor: "#121824",
-      });
+      Swal.fire("Eliminado", "Membresía eliminada", "success");
 
       await cargarDatos();
       await cargarAlertas();
     } catch {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Error al eliminar la membresía",
-      });
+      Swal.fire("Error", "No se pudo eliminar la membresía", "error");
     } finally {
       setCargando(false);
     }
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
-    setEditingData(null);
-  };
-
+  // ================================
+  // Render
+  // ================================
   return (
     <div className="p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto">
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-extrabold text-gray-800">
           Gestión de Membresías
@@ -293,9 +276,7 @@ export default function Membresias() {
 
       <div className="flex justify-between mb-4">
         <p className="text-gray-600">
-          {cargando
-            ? "Cargando..."
-            : `${registros.length} membresías registradas`}
+          {cargando ? "Cargando..." : `${registros.length} membresías registradas`}
         </p>
 
         <button
@@ -303,13 +284,10 @@ export default function Membresias() {
             setEditingData(null);
             setModalOpen(true);
           }}
-          disabled={cargando}
           className="px-5 py-2.5 bg-[#212B36] text-white font-medium rounded-md 
-                     hover:bg-[#1A222A] transition disabled:opacity-50 disabled:cursor-not-allowed
-                     flex items-center gap-2"
+                     hover:bg-[#1A222A] transition flex items-center gap-2"
         >
-          <span>+</span>
-          Registrar Membresía
+          <span>+</span> Registrar Membresía
         </button>
       </div>
 
@@ -317,17 +295,18 @@ export default function Membresias() {
         data={registros}
         onEdit={editar}
         onRenew={renovar}
-        onDelete={eliminarReg}
+        onDelete={eliminar}
         cargando={cargando}
       />
 
-      <MembresiaModal open={modalOpen} onClose={closeModal}>
+      <MembresiaModal open={modalOpen} onClose={() => setModalOpen(false)}>
         <div className="flex justify-between items-center mb-6 border-b pb-2">
           <h2 className="text-2xl font-bold text-[#212B36]">
             {editingData?.id ? "Editar Membresía" : "Registrar Nueva Membresía"}
           </h2>
+
           <button
-            onClick={closeModal}
+            onClick={() => setModalOpen(false)}
             className="text-gray-500 hover:text-gray-700 text-xl font-bold"
           >
             ✕
@@ -337,12 +316,12 @@ export default function Membresias() {
         <MembresiaForm onSubmit={guardar} initialData={editingData} />
       </MembresiaModal>
 
-      {cargando && (
-        <div className="absolute top-4 right-4 bg-white p-3 rounded shadow flex items-center gap-2 z-20">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          <span className="text-sm">Cargando…</span>
-        </div>
-      )}
+      <RenovarMembresiaModal
+        open={renovarOpen}
+        onClose={() => setRenovarOpen(false)}
+        onSubmit={confirmarRenovacion}
+        item={renovarTarget}
+      />
     </div>
   );
 }
